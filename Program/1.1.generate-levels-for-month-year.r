@@ -6,20 +6,15 @@
 library("here")
 library("dplyr")
 
-
 # read data: 
-unloadNamespace("lubridate")
-df1.ed <- read_csv(here("data", "2018-01-17_daily-ed-visits-data.csv"))
-
-library("lubridate")
+df1.stock <- read.csv("https://raw.githubusercontent.com/YuetongLiu/Prophet_Forecasting/master/Data/Stock.csv")
 
 # first find levels of years: 
-year.start <- floor_date(df1.ed$StartDate[1], unit="year") %>% 
+year.start <- df1.stock$StartDate[1] %>% 
       as.character %>% 
       substr(3, 4) 
 
-year.end <- floor_date(df1.ed$StartDate[nrow(df1.ed)],
-                       unit="year") %>% 
+year.end <- df1.stock$StartDate[nrow(df1.stock)] %>% 
       as.character %>% 
       substr(3, 4) 
 
