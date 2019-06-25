@@ -1,7 +1,7 @@
 
 
 #*********************************************
-# FORECASTING ED VISITS USING PROPHET
+# FORECASTING DAX USING PROPHET
 #*********************************************
 
 library("here")
@@ -15,50 +15,37 @@ library("readr")
 rm(list=ls())
 
 # source scripts: ------------
-unloadNamespace("lubridate")  # see todo
-source(here("src", "2018-01-26_clean-ed-data.R"))
+source("https://raw.githubusercontent.com/YuetongLiu/Prophet_Forecasting/master/Program/1.Clean_Stock_Data.R")  # note that site has been set
 
-# TODO: ------------------------------------
-# > here and lubridate packages don't seem to play well 
-# > add holidays df in prophet( ); colnames holiday, ds, 
-#     lower_window, upper_window as nums 
-# > sim histo fcast
-# > add prev year to graph 
-# > add CIs to graph as lines
-# > fn for recent dates fcast plot 
-# > add if( ) statement for whether to retain actuals 
-# > add site name to graphs 
-#*******************************************
+
 
 # input variables: --------------
 # set cutoff date for forecast: 
 start.date <- as.Date("2017-11-01")
-start.index <- match(start.date, as.Date(df2.ed.prophet$ds))
+start.index <- match(start.date, as.Date(df2.stock.prophet$ds))
 
 # set forecast horizon in days: 
 horizon = 70 
 
 
 # fit model using histo data up to cutoff: ---------------
-df3.ed.histo <-  df2.ed.prophet[1:start.index, ]
+df3.histo <-  df2.stock.prophet[1:start.index, ]
 # max(df3.ed.histo$ds)  
 
 # retain actuals to compare: 
-df4.ed.actual <- df2.ed.prophet[(start.index + 1):nrow(df2.ed.prophet), ]
+df4.actual <- df2.stock.prophet[(start.index + 1):nrow(df2.stock.prophet), ]
 
 # apparently ggplot needs POSIXct: 
-df4.ed.actual$ds <- as.POSIXct(df4.ed.actual$ds)
-# str(df4.ed.actual)
-
+df4.actual$ds <- as.POSIXct(df4.ed.actual$ds)
 
 
 #*******************************************
 # fit model: 
 #*******************************************
-ed.model <- prophet(df3.ed.histo)
+stock.model <- prophet(df3.histo)
 
 # df of forecsat horizon:  ----------
-future <- make_future_dataframe(ed.model, 
+future <- make_future_dataframe(stock.model, 
                                 periods = horizon,
                                 freq = "day")  
 
@@ -66,7 +53,7 @@ tail(future,horizon)
 
 
 # predict with predict( ): -----
-fcast <- predict(ed.model, future)
+fcast <- predict(stock.model, future)
 
 str(fcast); summary(fcast)
 tail(fcast[c('ds', 'yhat', 'yhat_lower', 'yhat_upper')])
@@ -76,11 +63,11 @@ tail(fcast[c('ds', 'yhat', 'yhat_lower', 'yhat_upper')])
 
 #**************************************
 # plot the forecast: --------
-plot(ed.model, fcast)
+plot(stock.model, fcast)
 # plot(fcast)  # prduces something crazy 
 
 # decompose time series: --------
-prophet_plot_components(ed.model, fcast)  
+prophet_plot_components(stock.model, fcast)  
 # todo: flat trend since 2016?? Does that make sense? 
 
 
@@ -118,7 +105,7 @@ p1.fcast <- ggplot() +
                 colour="blue") + 
       
       # now add actuals line: 
-      geom_line(data=df4.ed.actual, 
+      geom_line(data=df4.actual, 
                 aes(x=ds, y=y), 
                 colour="red") + 
       

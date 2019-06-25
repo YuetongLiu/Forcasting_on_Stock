@@ -1,7 +1,7 @@
 
 
 #*********************************
-# EXPLORATORY GRAPHS FOR ED DATA 
+# EXPLORATORY GRAPHS FOR DATA 
 #*********************************
 
 library("here")
@@ -15,67 +15,48 @@ library("fpp")
 # help(package="forecast")
 rm(list = ls())
 
-# source scripts: ------------
-source(here("src", "2018-01-26_clean-ed-data.R"))  # note that site has been set
-
-# TODO: ------------------------------------
-# > note: here and lubridate packages don't seem to play well 
-# > stl( ) graph 
-#*******************************************
-
-
-# identify site for plot titles and filenames: 
-if (!length(table(df1.ed$FacilityLongName)) == 1) {
-      print("error: more than 1 site in data")
-} else {
-      site.name <- df1.ed$FacilityLongName[1]
-}
-# site.name
+# source scripts: -----------
+source("https://raw.githubusercontent.com/YuetongLiu/Prophet_Forecasting/master/Program/1.Clean_Stock_Data.R")  # note that site has been set
 
 # id first and last years: 
-first.date <- min(df1.ed$StartDate)  %>% print 
-last.date <- max(df1.ed$StartDate)  %>% print 
-
-
-
-# basic graphs:-------------
-unloadNamespace("lubridate")  # otherwise here package doesn't work 
+first.date <- df1.stock$StartDate[1]  %>% print 
+last.date <- df1.stock$StartDate[nrow(df1.stock)] %>% print 
 
 # boxplot by year: 
-p1.ed.boxplot <- 
-      ggplot(df1.ed, 
-             aes(x=year, y=numvisits)) + 
+p1.boxplot <- 
+      ggplot(df1.stock, 
+             aes(x=year, y=DAX)) + 
       geom_boxplot() + 
       stat_summary(fun.y = mean, 
                    geom = "point") + 
-      labs(title = paste(site.name, "ED visits by year")) + 
-      theme_classic(); p1.ed.boxplot
+      labs(title = "DAX by year") + 
+      theme_classic(); p1.boxplot
 
 
 # boxplot by month: 
-p2.ed.boxplot.month <- 
-      ggplot(df1.ed, 
-             aes(x=month, y=numvisits)) + 
+p2.boxplot.month <- 
+      ggplot(df1.stock, 
+             aes(x=month, y=DAX)) + 
       facet_wrap(~year) + 
       geom_boxplot() + 
       stat_summary(fun.y = mean, 
                    geom = "point") + 
-      labs(title = paste(site.name, "ED visits by month and year")) + 
-      theme_classic(); p2.ed.boxplot.month
+      labs(title = "DAX by month and year") + 
+      theme_classic(); p2.boxplot.month
 
 
 # seasonal boxplot: 
 p3.seasonal.box <- 
       ggplot(
             # get avg per month for each year:  
-            group_by(df1.ed, year, month) %>% 
-                  summarize(month.avg = mean(numvisits)), 
+            group_by(df1.stock, year, month) %>% 
+                  summarize(month.avg = mean(DAX)), 
             
             # now add aes: 
              aes(x=month, 
                  y=month.avg)) + 
       geom_boxplot() + 
-      labs(title = paste(site.name, "ED visits by month across years"), 
+      labs(title = "DAX by month across years", 
            subtitle = paste(first.date, "to", last.date)) + 
       theme_classic(); p3.seasonal.box
 
@@ -84,8 +65,8 @@ p3.seasonal.box <-
 p4.seasonal.line <- 
       ggplot(
             # get avg per month for each year:  
-            group_by(df1.ed, year, month) %>% 
-                  summarize(month.avg = mean(numvisits)),
+            group_by(df1.stock, year, month) %>% 
+                  summarize(month.avg = mean(DAX)),
             
             # now add aes( ): 
              aes(x=month, 
@@ -93,7 +74,7 @@ p4.seasonal.line <-
                  group=year, 
                  col=year)) + 
       geom_line() + 
-      labs(title = paste(site.name, "Avg ED visits by month across years"), 
+      labs(title = "Avg DAX by month across years", 
            subtitle = paste(first.date, "to", last.date)) +
       theme_classic(); p4.seasonal.line
 
@@ -107,26 +88,26 @@ p4.seasonal.line <-
 #************************************
 
 # time series by day: 
-p5.ed.time.series.by.day <- 
-      ggplot(df1.ed,
+p5.time.series.by.day <- 
+      ggplot(df1.stock,
             aes(x=StartDate, 
-                y=numvisits)) + 
+                y=DAX)) + 
       
       geom_line() +  # try geom_point for an alternate view 
       
-      labs(title = paste(site.name, "ED daily visits"), 
+      labs(title = "DAX", 
            subtitle = paste(first.date, "to", last.date)) +
       
-      theme_classic(); p5.ed.time.series.by.day
+      theme_classic(); p5.time.series.by.day
 
 
 
 
 # time series by week 
-p6.ed.time.series.by.week <- 
+p6.time.series.by.week <- 
       ggplot(# summarzie data by week: 
-            group_by(df1.ed, week) %>% 
-                  summarize(week.mean = mean(numvisits)),
+            group_by(df1.stock, week) %>% 
+                  summarize(week.mean = mean(DAX)),
             # now add aes
             aes(x=week, 
                 y=week.mean, 
@@ -134,18 +115,18 @@ p6.ed.time.series.by.week <-
       
       geom_line() + 
       
-      labs(title = paste(site.name, "Avg ED daily visits by week"), 
+      labs(title = "DAX by week", 
            subtitle = paste(first.date, "to", last.date)) +
       
-      theme_classic(); p6.ed.time.series.by.week
+      theme_classic(); p6.time.series.by.week
 
 
 # time series by month 
-p7.ed.time.series.by.month <- 
+p7.time.series.by.month <- 
       ggplot(
             # summarzie data by month: 
-            group_by(df1.ed, month.year) %>% 
-                  summarize(month.mean = mean(numvisits)) %>% 
+            group_by(df1.stock, month.year) %>% 
+                  summarize(month.mean = mean(DAX)) %>% 
                   slice(1:n()),  # change endpoint to slice 
             # now add aes  
             aes(x=month.year, 
@@ -154,14 +135,14 @@ p7.ed.time.series.by.month <-
       
       geom_line() + 
       
-      labs(title = paste(site.name, "Avg ED daily visits by month"), 
+      labs(title = "Avg DAX by month", 
            subtitle = paste(first.date, "to", last.date)) +
       
-      theme_classic() ; p7.ed.time.series.by.month
+      theme_classic() ; p7.time.series.by.month
 
 
 # decompose using stl( ): 
-# stl.fit <- stl(as.ts(df1.ed$numvisits, 
+# stl.fit <- stl(as.ts(df1.stock$DAX, 
 #                      start=c(2009, 1), 
 #                      frequency=365))
 # 
@@ -171,20 +152,20 @@ p7.ed.time.series.by.month <-
 # testing normality: 
 
 # density plot: 
-p8.density <- ggplot(df1.ed, 
-                  aes(x=numvisits)) + 
+p8.density <- ggplot(df1.stock, 
+                  aes(x=DAX)) + 
       geom_density() + 
-      # geom_vline(xintercept = mean(df1.ed$numvisits)) + 
+      # geom_vline(xintercept = mean(df1.stock$DAX)) + 
       facet_wrap(~year) + 
       
       # round( ) to -1 for nearest 10s place:
-      scale_x_continuous(limits = c(round(min(df1.ed$numvisits), -1),
-                                    round(max(df1.ed$numvisits), -1)),
-                         breaks = seq(round(min(df1.ed$numvisits), -1),
-                                      round(max(df1.ed$numvisits), -1),
+      scale_x_continuous(limits = c(round(min(df1.stock$DAX), -1),
+                                    round(max(df1.stock$DAX), -1)),
+                         breaks = seq(round(min(df1.stock$DAX), -1),
+                                      round(max(df1.stock$DAX), -1),
                                        20)) +
 
-      labs(title = paste(site.name, "Density of daily ED visits"), 
+      labs(title = "Density of DAX", 
            subtitle = paste(first.date, "to", last.date)) + 
       
       theme_classic(); p8.density
@@ -198,7 +179,7 @@ p8.density <- ggplot(df1.ed,
 setpar <- par(mfrow=c(3, 4))  # 3 rows 4 cols 
 
 # split data by year: 
-df1.split.year <- split(df1.ed$numvisits, df1.ed$year)
+df1.split.year <- split(df1.stock$DAX, df1.stock$year)
 
 # qqnorm for each year: 
 mapply(
@@ -209,33 +190,10 @@ mapply(
       
       # args to fn: 
       df1.split.year, 
-      names(table(df1.ed$year))
+      names(table(df1.stock$year))
 ) 
 
 p9.qqnorm <- recordPlot()  # then use recordPlot( )
 
 # reset display: 
 par(setpar)
-
-
-
-
-# save all plots in one pdf: ----------
-plots <- list(p1.ed.boxplot, 
-              p2.ed.boxplot.month, 
-              p3.seasonal.box, 
-              p4.seasonal.line,
-              p5.ed.time.series.by.day, 
-              p6.ed.time.series.by.week, 
-              p7.ed.time.series.by.month, 
-              p8.density, 
-              p9.qqnorm)
-
-# save all plots in 1 pdf: 
-filename <- paste0("2018-02-01_",
-                  gsub(" ", "-", tolower(site.name)),
-                  "_ed-exploratory-graphs.pdf")
-
-pdf(here("output from src", filename))
-plots[1:9]
-dev.off()
